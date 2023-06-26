@@ -1,11 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using QuakeAPI.Data;
+
+using QuakeAPI.Data.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<QuakeDbContext>(options => {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("QuakeDb"));
-});
+builder.Services.AddRepositoryService(builder.Configuration);
 
 var app = builder.Build();
 
