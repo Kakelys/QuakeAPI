@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -16,8 +17,10 @@ namespace QuakeAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "varchar(255)", nullable: false, defaultValue: "noname"),
                     Email = table.Column<string>(type: "varchar(255)", nullable: false),
-                    PasswordHash = table.Column<string>(type: "varchar(max)", nullable: false)
+                    PasswordHash = table.Column<string>(type: "varchar(max)", nullable: false),
+                    Role = table.Column<string>(type: "varchar(50)", nullable: false, defaultValue: "User")
                 },
                 constraints: table =>
                 {
@@ -33,12 +36,32 @@ namespace QuakeAPI.Migrations
                     Name = table.Column<string>(type: "varchar(255)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(3000)", nullable: false),
                     PosterPath = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LocationPath = table.Column<string>(type: "varchar(255)", nullable: false),
-                    MaxPlayers = table.Column<int>(type: "int", nullable: false)
+                    LocationPath = table.Column<string>(type: "varchar(255)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Locations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AccountId = table.Column<int>(type: "int", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(1000)", nullable: false),
+                    Expires = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Token_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -48,7 +71,8 @@ namespace QuakeAPI.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(255)", nullable: false),
-                    LocationId = table.Column<int>(type: "int", nullable: false)
+                    LocationId = table.Column<int>(type: "int", nullable: false),
+                    MaxPlayers = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -118,6 +142,17 @@ namespace QuakeAPI.Migrations
                 table: "Sessions",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tokens_AccountId",
+                table: "Tokens",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tokens_RefreshToken",
+                table: "Tokens",
+                column: "RefreshToken",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -127,10 +162,13 @@ namespace QuakeAPI.Migrations
                 name: "ActiveAccounts");
 
             migrationBuilder.DropTable(
-                name: "Accounts");
+                name: "Tokens");
 
             migrationBuilder.DropTable(
                 name: "Sessions");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
 
             migrationBuilder.DropTable(
                 name: "Locations");
