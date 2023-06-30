@@ -10,19 +10,22 @@ namespace QuakeAPI.Data.Repository
         private ILocationRepository _location;
         private ISessionRepository _session;
         private IActiveAccountRepository _activeAccount;
+        private ITokenRepository _token;
 
         public RepositoryManager(
             QuakeDbContext context,
             IAccountRepository account,
             ILocationRepository location,
             ISessionRepository session,
-            IActiveAccountRepository activeAccount)
+            IActiveAccountRepository activeAccount,
+            ITokenRepository token)
         {
             _context = context;
             _account = account;
             _location = location;
             _session = session;
             _activeAccount = activeAccount;
+            _token = token;
         }
 
         public IAccountRepository Account => _account;
@@ -32,6 +35,8 @@ namespace QuakeAPI.Data.Repository
         public ISessionRepository Session => _session;
 
         public IActiveAccountRepository ActiveAccount => _activeAccount;
+
+        public ITokenRepository Token => _token;
 
         public async Task BeginTransaction()
         {

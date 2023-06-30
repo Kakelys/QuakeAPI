@@ -5,10 +5,11 @@ namespace QuakeAPI.Data
 {
     public class QuakeDbContext : DbContext
     {
-        public DbSet<Session> Sessions { get;set; } = null!;
-        public DbSet<Location> Locations { get;set; } = null!;
-        public DbSet<Account> Accounts { get;set; } = null!;
-        public DbSet<ActiveAccount> ActiveAccounts { get;set; } = null!;
+        public virtual DbSet<Session> Sessions { get;set; } = null!;
+        public virtual DbSet<Location> Locations { get;set; } = null!;
+        public virtual DbSet<Account> Accounts { get;set; } = null!;
+        public virtual DbSet<ActiveAccount> ActiveAccounts { get;set; } = null!;
+        public virtual DbSet<Token> Tokens { get;set; } = null!;
 
         public QuakeDbContext(DbContextOptions<QuakeDbContext> options) : base(options)
         {}
@@ -20,9 +21,22 @@ namespace QuakeAPI.Data
                 account.HasKey(a => a.Id);
                 account.HasIndex(a => a.Email).IsUnique();
 
-                account.Property(a => a.Id).ValueGeneratedOnAdd();
-                account.Property(a => a.Email).IsRequired().HasColumnType("varchar(255)");
-                account.Property(a => a.PasswordHash).IsRequired().HasColumnType("varchar(max)");
+                account.Property(a => a.Id)
+                    .ValueGeneratedOnAdd();
+                account.Property(a => a.Email)
+                    .IsRequired().
+                    HasColumnType("varchar(255)");
+                account.Property(a => a.PasswordHash)
+                    .IsRequired()
+                    .HasColumnType("varchar(max)");
+                account.Property(a => a.Role)
+                    .IsRequired()
+                    .HasColumnType("varchar(50)")
+                    .HasDefaultValue(Role.User);
+                account.Property(a => a.Username)
+                    .IsRequired()
+                    .HasColumnType("varchar(255)")
+                    .HasDefaultValue("noname");
 
                 account.HasOne(a => a.ActiveAccount)
                     .WithOne(aa => aa.Account)
@@ -75,7 +89,8 @@ namespace QuakeAPI.Data
                     .IsRequired()
                     .HasColumnType("varchar(255)");
                 location.Property(l => l.Description)
-                    .IsRequired().HasColumnType("nvarchar(3000)");;
+                    .IsRequired()
+                    .HasColumnType("nvarchar(3000)");
                 location.Property(l => l.LocationPath)
                     .IsRequired()
                     .HasColumnType("varchar(255)");
@@ -84,6 +99,24 @@ namespace QuakeAPI.Data
                     .WithOne(s => s.Location)
                     .HasForeignKey(s => s.LocationId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Token>(t => 
+            {
+                t.HasKey(t => t.Id);
+
+                t.HasIndex(t => t.RefreshToken).IsUnique();
+
+                t.Property(t => t.Id)
+                    .ValueGeneratedOnAdd();
+                t.Property(t => t.RefreshToken)
+                    .IsRequired()
+                    .HasColumnType("nvarchar(1000)");
+
+                t.HasOne(t => t.Account).WithMany(a => a.Tokens)
+                    .HasForeignKey(t => t.AccountId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_Token_AccountId");
             });
 
            base.OnModelCreating(builder);

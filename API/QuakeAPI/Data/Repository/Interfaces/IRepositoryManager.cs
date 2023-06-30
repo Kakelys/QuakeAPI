@@ -6,6 +6,7 @@ namespace QuakeAPI.Data.Repository.Interfaces
         ILocationRepository Location { get; }
         ISessionRepository Session { get; }
         IActiveAccountRepository ActiveAccount { get; }
+        ITokenRepository Token { get; }
 
         Task BeginTransaction();
         Task Commit();
