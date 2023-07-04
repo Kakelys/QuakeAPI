@@ -22,7 +22,7 @@ namespace QuakeAPI.Services
         {
             var sessions = await _rep.Session
                 .FindWithAccountsAndLocation()
-                .Where(s => s.Deleted != null)
+                .Where(s => s.Deleted == null)
                 .Select(session => new SessionDto()
                 {
                     Id = session.Id,
@@ -39,7 +39,7 @@ namespace QuakeAPI.Services
         {
             var session = await _rep.Session
                 .FindWithAccountsAndLocation()
-                .Where(s => s.Id == id && s.Deleted != null)
+                .Where(s => s.Id == id && s.Deleted == null)
                 .Select(session => new SessionDetail()
                 {
                     Id = session.Id,
