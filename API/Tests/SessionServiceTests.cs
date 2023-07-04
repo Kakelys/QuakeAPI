@@ -26,8 +26,8 @@ namespace Tests
 
             var activeAccounts = new List<ActiveAccount>
             {
-                new ActiveAccount { AccountId = accounts[0].Id, SessionId = 1, Account = accounts[0]},
-                new ActiveAccount { AccountId = accounts[1].Id, SessionId = 2, Account = accounts[1]}
+                new ActiveAccount { Id = 1, AccountId = accounts[0].Id, SessionId = 1, Account = accounts[0]},
+                new ActiveAccount { Id = 2, AccountId = accounts[1].Id, SessionId = 2, Account = accounts[1]}
             };
 
             var sessions = new List<Session>
