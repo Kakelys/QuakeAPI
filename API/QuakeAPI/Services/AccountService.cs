@@ -33,9 +33,9 @@ namespace QuakeAPI.Services
             var pair = _tokenService.CreatePair(account);
             var maxTokenString = _config["Jwt:MaxTokenCount"];
             if(string.IsNullOrEmpty(maxTokenString))
-                throw new ArgumentNullException("Jwt:MaxTokenCount");
+                throw new NullReferenceException("Jwt:MaxTokenCount");
 
-            var maxTokenCount = Int32.Parse(maxTokenString);
+            var maxTokenCount = int.Parse(maxTokenString);
 
             if(account.Tokens.Count >= maxTokenCount)
             {
@@ -89,10 +89,10 @@ namespace QuakeAPI.Services
 
                 return pair;
             }
-            catch(Exception ex)
+            catch
             {
                 await _rep.Rollback();
-                throw ex;
+                throw;
             }
         }
 

@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRepositoryService(builder.Configuration);
 
 builder.Services.AddScoped<ILocationService, LocationService>();
-builder.Services.AddScoped<ISessionService, SessionsService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 
