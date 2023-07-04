@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using QuakeAPI.Data.Models;
 using QuakeAPI.Data.Repository.Interfaces;
 using QuakeAPI.DTO;
+using QuakeAPI.Exceptions;
 using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Services
@@ -81,19 +82,27 @@ namespace QuakeAPI.Services
 
         public async Task Delete(int id)
         {
-            var entity = await _rep.Location.FindByCondition(x => x.Id == id, false).FirstOrDefaultAsync();
-            if(entity == null)
-                throw new Exception("Location not found.");
+            var entity = await _rep.Location.FindByCondition(x => x.Id == id, false)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Location not found.");
+
+            await _rep.BeginTransaction();
 
             _rep.Location.Delete(entity);
-
-            if(File.Exists(LOCATION_PATH + entity.LocationPath))
-                File.Delete(LOCATION_PATH + entity.LocationPath);
-
-            if(File.Exists(POSTER_PATH + entity.PosterPath))
-                File.Delete(POSTER_PATH + entity.PosterPath);
-
             await _rep.Save();
+            try 
+            {
+                if(File.Exists(LOCATION_PATH + entity.LocationPath))
+                    File.Delete(LOCATION_PATH + entity.LocationPath);
+
+                if(File.Exists(POSTER_PATH + entity.PosterPath))
+                    File.Delete(POSTER_PATH + entity.PosterPath);
+            } catch(Exception ex) 
+            {
+                await _rep.Rollback();
+                throw new Exception("Failed to delete files", ex);
+            }
+
+            await _rep.Commit();
         }
 
         public async Task<List<Location>> GetAll()

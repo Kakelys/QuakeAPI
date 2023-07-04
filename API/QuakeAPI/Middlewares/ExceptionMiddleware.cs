@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using QuakeAPI.Exceptions;
 
 namespace QuakeAPI.Middlewares
@@ -39,11 +36,11 @@ namespace QuakeAPI.Middlewares
                 context.Response.ContentType = "text/plain";
                 await context.Response.WriteAsync(ex.Message);
             }
-            catch (Exception ex)
+            catch
             {
                 context.Response.StatusCode = 500;
                 context.Response.ContentType = "text/plain";
-                await context.Response.WriteAsync(ex.Message);
+                await context.Response.WriteAsync("Internal server error.");
             }
         }
     }
