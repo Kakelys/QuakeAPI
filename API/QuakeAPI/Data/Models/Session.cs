@@ -8,6 +8,8 @@ namespace QuakeAPI.Data.Models
         public string Name { get;set; } = null!;
         public int LocationId { get;set; }
         public int MaxPlayers { get;set; }
+        public DateTime Created { get;set; }
+        public DateTime? Deleted { get;set; }
         // json ignore for prevent cycling with ActiveAccount on serializing
         [JsonIgnore]
         public Location Location { get;set; } = null!;
