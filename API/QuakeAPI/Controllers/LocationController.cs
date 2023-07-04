@@ -18,9 +18,9 @@ namespace QuakeAPI.Controllers
         }
 
         [HttpGet, Authorize(Roles = $"{Role.Admin},{Role.User}")]
-        public async Task<IActionResult> GetLocations()
+        public async Task<IActionResult> GetLocations([FromQuery] Page page)
         {
-            return Ok(await _locationService.GetAll());
+            return Ok(await _locationService.GetPage(page));
         }
 
         [HttpPost, Authorize(Roles = Role.Admin)]

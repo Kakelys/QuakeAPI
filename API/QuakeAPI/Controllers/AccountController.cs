@@ -18,15 +18,14 @@ namespace QuakeAPI.Controllers
         }
 
         [HttpGet, Authorize(Roles = Role.Admin)]
-        public async Task<IActionResult> GetAccounts()
+        public async Task<IActionResult> GetAccounts([FromQuery] Page page)
         {
-            return Ok(await _accountService.GetAll());   
+            return Ok(await _accountService.GetPage(page));   
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(Auth auth)
         {
-            Console.WriteLine($"Register: {auth.Email}, {auth.Password}");
             return Ok(await _accountService.Register(auth));
         }
 

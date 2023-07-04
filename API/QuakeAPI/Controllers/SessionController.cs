@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuakeAPI.Data.Models;
+using QuakeAPI.DTO;
 using QuakeAPI.DTO.Session;
 using QuakeAPI.Extensions;
 using QuakeAPI.Services.Interfaces;
@@ -20,9 +21,9 @@ namespace QuakeAPI.Controllers
         }
 
         [HttpGet, Authorize(Roles = $"{Role.Admin},{Role.User}")]
-        public async Task<IActionResult> GetSessions()
+        public async Task<IActionResult> GetSessions([FromQuery] Page page)
         {
-            return Ok(await _sessionService.GetAll());   
+            return Ok(await _sessionService.GetPage(page));   
         }
         
         [HttpGet("{id}"), Authorize(Roles = $"{Role.Admin},{Role.User}")]
@@ -37,12 +38,6 @@ namespace QuakeAPI.Controllers
             return Ok(await _sessionService.GetPlayers(id));
         }
 
-        [HttpGet("players"), Authorize(Roles = Role.User)]
-        public async Task<IActionResult> GetPlayerSessions()
-        {
-            return Ok(await _sessionService.GetPlayersByPlayer(User.Id()));
-        }
-
         [HttpPost, Authorize(Roles = Role.User)]
         public async Task<IActionResult> CreateSession(SessionNew session)
         {
@@ -52,14 +47,14 @@ namespace QuakeAPI.Controllers
         [HttpPost("{id}/connect"), Authorize(Roles = Role.User)]
         public async Task<IActionResult> ConnectToSession(int id)
         {
-            await _sessionService.AddUser(id, User.Id());
+            await _sessionService.ConnectAccount(id, User.Id());
             return Ok();
         }
 
         [HttpPost("{id}/disconnect"), Authorize(Roles = Role.User)]
         public async Task<IActionResult> DisconnectFromSession(int id)
         {
-            await _sessionService.RemoveUser(id, User.Id());
+            await _sessionService.DisconnectAccount(id, User.Id());
             return Ok();
         }
     }

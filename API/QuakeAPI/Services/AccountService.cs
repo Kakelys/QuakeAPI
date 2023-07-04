@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using QuakeAPI.Data.Models;
 using QuakeAPI.Data.Repository.Interfaces;
 using QuakeAPI.DTO;
+using QuakeAPI.Exceptions;
 using QuakeAPI.Extensions;
 using QuakeAPI.Services.Interfaces;
 
@@ -22,13 +23,11 @@ namespace QuakeAPI.Services
 
         public async Task<JwtPair> Login(Auth auth)
         {
-            var account = await _rep.Account.FindByEmailWithTokens(auth.Email, true).FirstOrDefaultAsync();
-
-            if(account == null)
-                throw new Exception("Account with that email not found");
+            var account = await _rep.Account.FindByEmailWithTokens(auth.Email, true)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Account with that email not found");
 
             if(!PasswordHelper.VerifyPassword(auth.Password, account.PasswordHash))
-                throw new Exception("Wrong password");
+                throw new BadRequestException("Wrong password");
 
             var pair = _tokenService.CreatePair(account);
             var maxTokenString = _config["Jwt:MaxTokenCount"];
@@ -59,7 +58,7 @@ namespace QuakeAPI.Services
         {
             //create account
             if(await _rep.Account.FindByEmail(auth.Email, false).FirstOrDefaultAsync() != null)
-                throw new Exception("Account with same email already exists");
+                throw new BadRequestException("Account with same email already exists");
 
             var account = new Account
             {
@@ -98,10 +97,8 @@ namespace QuakeAPI.Services
 
         public async Task Delete(int id)
         {
-            var user = await _rep.Account.FindById(id, false).FirstOrDefaultAsync();
-
-            if(user == null)
-                throw new Exception("Account not found");
+            var user = await _rep.Account.FindById(id, false)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Account not found");
 
             _rep.Account.Delete(user);
 
@@ -111,6 +108,18 @@ namespace QuakeAPI.Services
         public async Task<List<AccountDto>> GetAll()
         {
             return await _rep.Account.FindAll(false).Select(a => new AccountDto
+            {
+                Id = a.Id,
+                Email = a.Email,
+                Username = a.Username,
+                Role = a.Role
+            }).ToListAsync();
+        }
+
+        public async Task<List<AccountDto>> GetPage(Page page)
+        {
+            return await _rep.Account.FindPage(page, false)
+            .Select(a => new AccountDto
             {
                 Id = a.Id,
                 Email = a.Email,

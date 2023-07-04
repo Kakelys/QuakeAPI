@@ -20,7 +20,7 @@ namespace QuakeAPI.Services
 
         public async Task<List<SessionDto>> GetAll()
         {
-            var sessions = await _rep.Session
+            return await _rep.Session
                 .FindWithAccountsAndLocation()
                 .Where(s => s.Deleted == null)
                 .Select(session => new SessionDto()
@@ -31,8 +31,20 @@ namespace QuakeAPI.Services
                     ActivePlayers = session.ActiveAccounts.Count,
                     LocationName = session.Location.Name
                 }).ToListAsync();
+        }
 
-            return sessions;
+        public async Task<List<SessionDto>> GetPage(Page page)
+        {
+            return await _rep.Session.FindPage(page, false)
+                .Where(s => s.Deleted == null)
+                .Select(session => new SessionDto()
+                {
+                    Id = session.Id,
+                    Name = session.Name,
+                    MaxPlayers = session.MaxPlayers,
+                    ActivePlayers = session.ActiveAccounts.Count,
+                    LocationName = session.Location.Name
+                }).ToListAsync();
         }
 
         public async Task<SessionDetail> GetDetail(int id)
@@ -56,7 +68,8 @@ namespace QuakeAPI.Services
         public async Task<List<Player>> GetPlayers(int id)
         {
             var session = await _rep.Session.FindByCondition(x => x.Id == id, false)
-                .Include(x => x.ActiveAccounts)
+                .Include(x => x.ActiveAccounts.Where(x => x.Disconnected == null))
+                .ThenInclude(x => x.Account)
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Session does not exist.");
 
             var players = session.ActiveAccounts.Select(x => new Player() 
@@ -73,7 +86,8 @@ namespace QuakeAPI.Services
         {
             ArgumentNullException.ThrowIfNull(session, "Session");
 
-            var creatorAccount = await _rep.Account.FindByCondition(x => x.Id == accountId, false)
+            var creatorAccount = await _rep.Account
+                .FindByCondition(x => x.Id == accountId, false)
                 .Include(a => a.ActiveAccounts.Where(a => a.Disconnected == null))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Account does not exist.");
 
@@ -104,14 +118,15 @@ namespace QuakeAPI.Services
             return sessionEntity;
         }
 
-        public async Task AddUser(int sessionId, int accountId)
+        public async Task ConnectAccount(int sessionId, int accountId)
         {
-            var user = await _rep.Account.FindByCondition(x => x.Id == accountId, false)
+            var user = await _rep.Account
+                .FindByCondition(x => x.Id == accountId, false)
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Account does not exist.");
 
             var session = _rep.Session
                 .FindByCondition(s => s.Id == sessionId, false)
-                .Include(s => s.ActiveAccounts)
+                .Include(s => s.ActiveAccounts.Where(s => s.Disconnected == null))
                 .FirstOrDefault() ?? throw new NotFoundException("Session does not exist.");
             
             if(session.Deleted != null)
@@ -119,6 +134,9 @@ namespace QuakeAPI.Services
 
             if(session.ActiveAccounts.Count >= session.MaxPlayers)
                 throw new BadRequestException("Session is full.");
+
+            if(session.ActiveAccounts.Where(x => x.AccountId == accountId).Count() > 0)
+                throw new BadRequestException("Account is already in this session.");
 
             var activeAccount = new ActiveAccount()
             {
@@ -132,7 +150,7 @@ namespace QuakeAPI.Services
             await _rep.Save();
         }
 
-        public async Task RemoveUser(int sessionId, int accountId)
+        public async Task DisconnectAccount(int sessionId, int accountId)
         {
             var session = await _rep.Session.FindByCondition(x => x.Id == sessionId, true)
                 .Include(s => s.ActiveAccounts)
@@ -150,20 +168,6 @@ namespace QuakeAPI.Services
             }
 
             await _rep.Save();
-        }
-
-        public async Task<List<Player>> GetPlayersByPlayer(int accountId)
-        {
-            var session = await _rep.Session.FindByAccountId(accountId, false)
-                .FirstOrDefaultAsync() ?? throw new NotFoundException("Session does not exist.");
-
-            var players = session.ActiveAccounts.Select(x => new Player()
-            {
-                Id = x.Account.Id,
-                Name = x.Account.Email,
-            }).ToList();
-            
-            return players;
         }
     }
 }

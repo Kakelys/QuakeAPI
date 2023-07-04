@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QuakeAPI.Data.Repository.Interfaces;
+using QuakeAPI.DTO;
 
 namespace QuakeAPI.Data.Repository
 {
@@ -28,5 +29,9 @@ namespace QuakeAPI.Data.Repository
                 _context.Set<T>().Where(expression) : 
                 _context.Set<T>().Where(expression).AsNoTracking();
 
+        public IQueryable<T> FindPage(Page page, bool asTracking) => 
+            asTracking ? 
+                _context.Set<T>().Skip((page.PageNumber - 1) * page.PageSize).Take(page.PageSize) : 
+                _context.Set<T>().Skip((page.PageNumber - 1) * page.PageSize).Take(page.PageSize).AsNoTracking();
     }
 }
