@@ -76,6 +76,11 @@ namespace QuakeAPI.Data
                     .HasForeignKey(s => s.LocationId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_Session_LocationId");
+
+                session.HasMany(s => s.ActiveAccounts)
+                    .WithOne(aa => aa.Session)
+                    .HasForeignKey(aa => aa.SessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<Location>(location => 

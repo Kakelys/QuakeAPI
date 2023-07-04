@@ -9,8 +9,6 @@ namespace QuakeAPI.DTO
         public string Name {get;set;} = null!;
         [Required]
         public string Description {get;set;}  = null!;
-        [Range(2,64)]
-        public int MaxPlayers {get;set;}
 
         [Required]
         public IFormFile Poster {get;set;} = null!;
