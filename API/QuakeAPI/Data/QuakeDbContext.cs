@@ -38,9 +38,9 @@ namespace QuakeAPI.Data
                     .HasColumnType("varchar(255)")
                     .HasDefaultValue("noname");
 
-                account.HasOne(a => a.ActiveAccount)
+                account.HasMany(a => a.ActiveAccounts)
                     .WithOne(aa => aa.Account)
-                    .HasForeignKey<ActiveAccount>(aa => aa.AccountId)
+                    .HasForeignKey(aa => aa.AccountId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -58,8 +58,8 @@ namespace QuakeAPI.Data
                     .HasDefaultValue(null);
 
                 active.HasOne(aa => aa.Account)
-                    .WithOne(a => a.ActiveAccount)
-                    .HasForeignKey<ActiveAccount>(aa => aa.AccountId)
+                    .WithMany(a => a.ActiveAccounts)
+                    .HasForeignKey(aa => aa.AccountId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_ActiveAccount_AccountId");
 

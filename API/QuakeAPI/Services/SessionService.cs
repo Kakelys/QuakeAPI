@@ -74,10 +74,10 @@ namespace QuakeAPI.Services
             ArgumentNullException.ThrowIfNull(session, "Session");
 
             var creatorAccount = await _rep.Account.FindByCondition(x => x.Id == accountId, false)
-                .Include(a => a.ActiveAccount)
+                .Include(a => a.ActiveAccounts.Where(a => a.Disconnected == null))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Account does not exist.");
 
-            if(creatorAccount.ActiveAccount != null)
+            if(creatorAccount.ActiveAccounts.Count > 0)
                 throw new BadRequestException("Account is already in a session.");
 
             var sessionEntity = new Session()
