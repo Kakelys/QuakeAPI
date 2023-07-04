@@ -10,11 +10,18 @@ namespace QuakeAPI.Data.Repository.Implements
         {
         }
 
-        public IQueryable<Session?> FindByAccountId(int accountId, bool asTracking)
+        public IQueryable<Session> FindByAccountId(int accountId, bool asTracking)
         {
             return _context.ActiveAccounts
                 .Where(p => p.AccountId == accountId)
                 .Include(p => p.Session.ActiveAccounts).Select(p => p.Session);
+        }
+
+        public IQueryable<Session> FindWithAccountsAndLocation()
+        {
+            return _context.Sessions
+                .Include(p => p.ActiveAccounts)
+                .Include(p => p.Location);
         }
     }
 }

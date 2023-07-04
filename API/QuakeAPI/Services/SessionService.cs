@@ -20,14 +20,9 @@ namespace QuakeAPI.Services
 
         public async Task<List<SessionDto>> GetAll()
         {
-            var tmpSessions = await _rep.Session.FindAll(false)
-                .Include(x => x.Location)
-                .Include(x => x.ActiveAccounts)
-                .ToListAsync();
-
-            var sessions = await _rep.Session.FindAll(false)
-                .Include(x => x.Location)
-                .Include(x => x.ActiveAccounts)
+            var sessions = await _rep.Session
+                .FindWithAccountsAndLocation()
+                .Where(s => s.Deleted != null)
                 .Select(session => new SessionDto()
                 {
                     Id = session.Id,
@@ -42,9 +37,9 @@ namespace QuakeAPI.Services
 
         public async Task<SessionDetail> GetDetail(int id)
         {
-            var session = await _rep.Session.FindByCondition(x => x.Id == id, false)
-                .Include(x => x.Location)
-                .Include(x => x.ActiveAccounts)
+            var session = await _rep.Session
+                .FindWithAccountsAndLocation()
+                .Where(s => s.Id == id && s.Deleted != null)
                 .Select(session => new SessionDetail()
                 {
                     Id = session.Id,
@@ -53,7 +48,7 @@ namespace QuakeAPI.Services
                     ActivePlayers = session.ActiveAccounts.Count,
                     Location = session.Location
                 })
-                .FirstOrDefaultAsync() ?? throw new NotFoundException("Session doesn't not exist.");
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Session doesn't exist.");
 
             return session;
         }
@@ -90,12 +85,14 @@ namespace QuakeAPI.Services
                 Name = session.Name,
                 LocationId = session.LocationId,
                 MaxPlayers = session.MaxPlayers,
+                Created = DateTime.Now
             };
 
             var ActiveAccount = new ActiveAccount()
             {
                 AccountId = creatorAccount.Id,
-                SessionId = sessionEntity.Id
+                SessionId = sessionEntity.Id,
+                Connected = DateTime.Now
             };
 
             sessionEntity.ActiveAccounts.Add(ActiveAccount);
@@ -116,6 +113,9 @@ namespace QuakeAPI.Services
                 .FindByCondition(s => s.Id == sessionId, false)
                 .Include(s => s.ActiveAccounts)
                 .FirstOrDefault() ?? throw new NotFoundException("Session does not exist.");
+            
+            if(session.Deleted != null)
+                throw new BadRequestException("Session is deleted.");
 
             if(session.ActiveAccounts.Count >= session.MaxPlayers)
                 throw new BadRequestException("Session is full.");
@@ -123,7 +123,8 @@ namespace QuakeAPI.Services
             var activeAccount = new ActiveAccount()
             {
                 AccountId = user.Id,
-                SessionId = session.Id
+                SessionId = session.Id,
+                Connected = DateTime.Now
             };
             
             _rep.ActiveAccount.Create(activeAccount);
@@ -133,7 +134,7 @@ namespace QuakeAPI.Services
 
         public async Task RemoveUser(int sessionId, int accountId)
         {
-            var session = await _rep.Session.FindByCondition(x => x.Id == sessionId, false)
+            var session = await _rep.Session.FindByCondition(x => x.Id == sessionId, true)
                 .Include(s => s.ActiveAccounts)
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Session does not exist.");
 
@@ -141,13 +142,11 @@ namespace QuakeAPI.Services
             if(activeAccount == null)
                 throw new BadRequestException("Account is not in this session.");
 
+            activeAccount.Disconnected = DateTime.Now;
+
             if(session.ActiveAccounts.Count == 1)
             {
-                _rep.Session.Delete(session);
-            }
-            else
-            {
-                _rep.ActiveAccount.Delete(activeAccount);
+                session.Deleted = DateTime.Now;
             }
 
             await _rep.Save();

@@ -46,7 +46,16 @@ namespace QuakeAPI.Data
 
             builder.Entity<ActiveAccount>(active => 
             {
-                active.HasKey(aa => new { aa.AccountId, aa.SessionId });
+                active.HasKey(aa => aa.Id);
+
+                active.Property(aa => aa.Id)
+                    .ValueGeneratedOnAdd();
+
+                active.Property(aa => aa.Connected)
+                    .IsRequired();
+
+                active.Property(aa => aa.Disconnected)
+                    .HasDefaultValue(null);
 
                 active.HasOne(aa => aa.Account)
                     .WithOne(a => a.ActiveAccount)
@@ -64,12 +73,17 @@ namespace QuakeAPI.Data
             builder.Entity<Session>(session => 
             {
                 session.HasKey(s => s.Id);
-                session.HasIndex(s => s.Name).IsUnique();
 
                 session.Property(s => s.Id).ValueGeneratedOnAdd();
                 session.Property(s => s.Name)
                     .IsRequired()
                     .HasColumnType("nvarchar(255)");
+
+                session.Property(s => s.Created)
+                    .IsRequired();
+
+                session.Property(s => s.Deleted)
+                    .HasDefaultValue(null);
 
                 session.HasOne(s => s.Location)
                     .WithMany(l => l.Sessions)
