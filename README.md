@@ -24,3 +24,10 @@ if you have specific database name or several servers change it in appsettings
   ```
   dotnet run
   ```
+
+
+Database scheme: 
+
+<picture>
+ <img alt="db scheme" src="db_scheme.png">
+</picture>
