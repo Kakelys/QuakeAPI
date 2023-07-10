@@ -164,19 +164,28 @@ namespace QuakeAPI.Services
             }).ToListAsync();
         }
 
-        public Task UpdateUsername(int id, string username)
+        public async Task Update(int id, AccountUpdate accountUpdate)
         {
-            throw new NotImplementedException();
-        }
+            var account = await _rep.Account.FindById(id, true)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Account not found");
 
-        public Task UpdateEmail(int id, string email)
-        {
-            throw new NotImplementedException();
-        }
+            account.Username = accountUpdate.Username ?? account.Username;
+            
+            if(account.Email != accountUpdate.Email && await _rep.Account.FindByEmail(accountUpdate.Email, false).AnyAsync())
+            {
+                throw new BadRequestException("Account with same email already exists");
+            }
+            else
+                account.Email = accountUpdate.Email ?? account.Email;
+            
+            if(
+                !string.IsNullOrEmpty(accountUpdate.NewPassword) 
+                && !string.IsNullOrEmpty(accountUpdate.OldPassword) 
+                && PasswordHelper.VerifyPassword(accountUpdate.OldPassword, account.PasswordHash)
+                )
+                account.PasswordHash = PasswordHelper.HashPassword(accountUpdate.NewPassword);
 
-        public Task UpdatePassword(int id, string oldPassword, string newPassword)
-        {
-            throw new NotImplementedException();
+            await _rep.Save();
         }
 
         /// <summary>

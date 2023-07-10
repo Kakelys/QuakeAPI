@@ -49,5 +49,12 @@ namespace QuakeAPI.Controllers
             await _accountService.Delete(id);
             return Ok();
         }
+
+        [HttpPut, Authorize]
+        public async Task<IActionResult> Update(AccountUpdate accountUpdate)
+        {
+            await _accountService.Update(User.Id(), accountUpdate);
+            return Ok();
+        }
     }
 }

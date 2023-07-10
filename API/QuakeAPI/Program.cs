@@ -6,6 +6,9 @@ using QuakeAPI.Services.Interfaces;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.OpenApi.Models;
 using QuakeAPI.Options;
+using FluentValidation;
+using QuakeAPI.DTO;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +67,13 @@ builder.Services.AddSwaggerGen(c =>
           }
       });
 });
+
+//validators
+builder.Services.AddFluentValidationAutoValidation(fv => 
+{
+  fv.DisableDataAnnotationsValidation = true;
+});
+builder.Services.AddScoped<IValidator<AccountUpdate>, AccountUpdateValidator>();
 
 //auth
 builder.Services.AddJwtAuthentication(builder.Configuration);
