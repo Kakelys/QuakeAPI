@@ -195,7 +195,7 @@ namespace QuakeAPI.Services
         public async Task DeleteOldAccounts()
         {
             var users = await _rep.Account
-                .FindByCondition(a => a.LastLoggedAt < DateTime.UtcNow.AddMonths(-3), true)
+                .FindByCondition(a => a.LastLoggedAt < DateTime.UtcNow.AddMonths(-3) && a.DeletedAt == null, true)
                 .ToListAsync();
 
             _rep.Account.DeleteMany(users);
