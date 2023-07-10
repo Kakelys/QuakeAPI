@@ -8,8 +8,8 @@ namespace QuakeAPI.Data.Models
         public int Id { get;set; }
         public int AccountId {get;set;}
         public int SessionId {get;set;}
-        public DateTime Connected { get;set; }
-        public DateTime? Disconnected { get;set; }
+        public DateTime ConnectedAt { get;set; }
+        public DateTime? DisconnectedAt { get;set; }
 
         public Account Account {get;set;} = null!;
         public Session Session {get;set;} = null!;

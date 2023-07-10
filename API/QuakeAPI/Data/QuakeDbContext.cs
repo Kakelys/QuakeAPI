@@ -37,6 +37,10 @@ namespace QuakeAPI.Data
                     .IsRequired()
                     .HasColumnType("varchar(255)")
                     .HasDefaultValue("noname");
+                account.Property(a => a.LastLoggedAt)
+                    .IsRequired();
+                account.Property(a => a.DeletedAt)
+                    .HasDefaultValue(null);
 
                 account.HasMany(a => a.ActiveAccounts)
                     .WithOne(aa => aa.Account)
@@ -51,10 +55,10 @@ namespace QuakeAPI.Data
                 active.Property(aa => aa.Id)
                     .ValueGeneratedOnAdd();
 
-                active.Property(aa => aa.Connected)
+                active.Property(aa => aa.ConnectedAt)
                     .IsRequired();
 
-                active.Property(aa => aa.Disconnected)
+                active.Property(aa => aa.DisconnectedAt)
                     .HasDefaultValue(null);
 
                 active.HasOne(aa => aa.Account)
@@ -79,10 +83,10 @@ namespace QuakeAPI.Data
                     .IsRequired()
                     .HasColumnType("nvarchar(255)");
 
-                session.Property(s => s.Created)
+                session.Property(s => s.CreatedAt)
                     .IsRequired();
 
-                session.Property(s => s.Deleted)
+                session.Property(s => s.DeletedAt)
                     .HasDefaultValue(null);
 
                 session.HasOne(s => s.Location)

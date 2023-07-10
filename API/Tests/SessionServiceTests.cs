@@ -119,21 +119,6 @@ namespace Tests
             Assert.ThrowsAsync<NotFoundException>(() => _sessionService.GetPlayers(-1));
         }
 
-        [Fact]
-        public async Task GetPlayersByPlayer_ValidId_ReturnsPlayers()
-        {
-            var players = await _sessionService.GetPlayersByPlayer(1);
-
-            Assert.NotNull(players);
-            Assert.True(players.Count > 0);
-        }
-
-        [Fact]
-        public void GetPlayersByPlayer_InvalidId_ThrowsNotFoundException()
-        {
-            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.GetPlayersByPlayer(-1));
-        }
-
         //Won't work because of the way the mock is set up(many-to-many)
         [Fact]
         public async Task CreateSession_ValidAccountIdAndSession_ReturnsSession()
@@ -163,49 +148,49 @@ namespace Tests
         [Fact]
         public async Task Connect_ValidAccountIdAndSessionId()
         {
-            await _sessionService.AddUser(1, 1);
+            await _sessionService.ConnectAccount(1, 1);
         }
 
         [Fact]
         public void Connect_InvalidAccountId_ThrowsNotFoundException()
         {
-            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.AddUser(-1, 1));
+            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.ConnectAccount(-1, 1));
         }
 
         [Fact]
         public void Connect_InvalidSessionId_ThrowsNotFoundException()
         {
-            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.AddUser(1, -1));
+            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.ConnectAccount(1, -1));
         }
 
         [Fact]
         public void Connect_SessionFull_ThrowsBadRequestException()
         {
-            Assert.ThrowsAsync<BadRequestException>(() => _sessionService.AddUser(2, 1));
+            Assert.ThrowsAsync<BadRequestException>(() => _sessionService.ConnectAccount(2, 1));
         }
 
         [Fact]
         public async Task Disconnect_ValidAccountIdAndSessionId()
         {
-            await _sessionService.RemoveUser(1, 1);
+            await _sessionService.DisconnectAccount(1, 1);
         }
 
         [Fact]
         public void Disconnect_InvalidAccountId_ThrowsNotFoundException()
         {
-            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.RemoveUser(-1, 1));
+            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.DisconnectAccount(-1, 1));
         }
 
         [Fact]
         public void Disconnect_InvalidSessionId_ThrowsNotFoundException()
         {
-            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.RemoveUser(1, -1));
+            Assert.ThrowsAsync<NotFoundException>(() => _sessionService.DisconnectAccount(1, -1));
         }
 
         [Fact]
         public void Disconnect_AccountNotInSession_ThrowsBadRequestException()
         {
-            Assert.ThrowsAsync<BadRequestException>(() => _sessionService.RemoveUser(1, 2));
+            Assert.ThrowsAsync<BadRequestException>(() => _sessionService.DisconnectAccount(1, 2));
         }
     }
 }
