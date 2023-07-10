@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuakeAPI.Data.Models;
 using QuakeAPI.DTO;
+using QuakeAPI.Extensions;
 using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Controllers
@@ -36,9 +37,9 @@ namespace QuakeAPI.Controllers
         }
 
         [HttpDelete, Authorize(Roles = Role.User)]
-        public async Task<IActionResult> DeleteSelf(int id)
+        public async Task<IActionResult> DeleteSelf()
         {
-            await _accountService.Delete(id);
+            await _accountService.Delete(User.Id());
             return Ok();
         }
 

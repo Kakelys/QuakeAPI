@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using QuakeAPI.Data.Repository.Interfaces;
-using QuakeAPI.DTO;
+using QuakeAPI.Extensions;
 
 namespace QuakeAPI.Data.Repository
 {
@@ -16,22 +15,19 @@ namespace QuakeAPI.Data.Repository
         public T Create(T entity) =>
             _context.Set<T>().Add(entity).Entity;
 
-        public void Delete(T entity) =>
+        public virtual void Delete(T entity) =>
             _context.Set<T>().Remove(entity);
 
+        public virtual void DeleteMany(IEnumerable<T> entities) =>
+            _context.Set<T>().RemoveRange(entities);
+
         public IQueryable<T> FindAll(bool asTracking) => 
-            asTracking ? 
-                _context.Set<T>() : 
-                _context.Set<T>().AsNoTracking();
+            _context.Set<T>()
+            .EnableAsTracking(asTracking);
 
         public IQueryable<T> FindByCondition(System.Linq.Expressions.Expression<Func<T, bool>> expression, bool asTracking) =>
-            asTracking ? 
-                _context.Set<T>().Where(expression) : 
-                _context.Set<T>().Where(expression).AsNoTracking();
-
-        public IQueryable<T> FindPage(Page page, bool asTracking) => 
-            asTracking ? 
-                _context.Set<T>().Skip((page.PageNumber - 1) * page.PageSize).Take(page.PageSize) : 
-                _context.Set<T>().Skip((page.PageNumber - 1) * page.PageSize).Take(page.PageSize).AsNoTracking();
+            _context.Set<T>()
+            .Where(expression)
+            .EnableAsTracking(asTracking);
     }
 }

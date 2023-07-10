@@ -17,6 +17,7 @@ namespace QuakeAPI.Data.Repository
             services.AddScoped<IActiveAccountRepository, ActiveAccountRepository>();
             services.AddScoped<ISessionRepository, SessionRepository>();
             services.AddScoped<ITokenRepository, TokenRepository>();
+            services.AddScoped<IAnalyticRepository, AnalyticRepository>();
 
             services.AddScoped<IRepositoryManager, RepositoryManager>();
 

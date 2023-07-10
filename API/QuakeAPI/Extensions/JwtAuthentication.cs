@@ -1,6 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using QuakeAPI.Options;
 
 namespace QuakeAPI.Extensions
 {
@@ -15,16 +17,15 @@ namespace QuakeAPI.Extensions
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(o => 
             {
-                var jwtKey = configuration["Jwt:AccessSecret"];
-                if(jwtKey == null)
-                    throw new ArgumentNullException("Jwt:AccessSecret");
+                var jwtKey = configuration.GetSection(JwtOptions.Jwt).Get<JwtOptions>() ?? 
+                    throw new NullReferenceException("JwtOptions.AccessSecret");
 
                 o.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = configuration["Jwt:Issuer"],
                     ValidAudience = configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtKey)),
+                        Encoding.UTF8.GetBytes(jwtKey.AccessSecret)),
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,

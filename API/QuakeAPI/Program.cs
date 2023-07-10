@@ -5,11 +5,15 @@ using QuakeAPI.Services;
 using QuakeAPI.Services.Interfaces;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.OpenApi.Models;
+using QuakeAPI.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //logging
 builder.Logging.AddConsole();
+
+//options
+builder.Services.AddAppOptions(builder.Configuration);
 
 //repository
 builder.Services.AddRepositoryService(builder.Configuration);
@@ -19,6 +23,12 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IAnalyticService, AnalyticService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+//account timed service
+builder.Services.AddHostedService<AccountTimedHostedService>();
+builder.Services.AddScoped<IAccountTimedService, AccountTimedService>();
 
 //swagger
 builder.Services.AddControllers();
@@ -58,6 +68,16 @@ builder.Services.AddSwaggerGen(c =>
 //auth
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
+
+//check folders for locations and posters
+var LOCATION_PATH = builder.Environment.WebRootPath + @"\Locations\";
+var POSTER_PATH = builder.Environment.WebRootPath + @"\Posters\";
+
+if(!Directory.Exists(LOCATION_PATH))
+    Directory.CreateDirectory(LOCATION_PATH);
+
+if(!Directory.Exists(POSTER_PATH))
+    Directory.CreateDirectory(POSTER_PATH);
 
 var app = builder.Build();
 
