@@ -2,29 +2,32 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using QuakeAPI.Data.Models;
 using QuakeAPI.Data.Repository.Interfaces;
 using QuakeAPI.DTO;
+using QuakeAPI.Exceptions;
+using QuakeAPI.Options;
 using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Services
 {
     public class TokenService : ITokenService
     {
-        private IRepositoryManager _rep;
-        private IConfiguration _config;
+        private readonly IRepositoryManager _rep;
+        private readonly JwtOptions _jwtOptions;
 
-        public TokenService(IRepositoryManager rep, IConfiguration config)
+        public TokenService(IRepositoryManager rep, IOptions<JwtOptions> jwtOptions)
         {
             _rep = rep;
-            _config = config;
+            _jwtOptions = jwtOptions.Value;
         }
 
         public JwtPair CreatePair(Account account)
         {
-            var accessToken = CreateToken(account, NewAccessTokenExpirationDate(), _config["Jwt:AccessSecret"]);
-            var refreshToken = CreateToken(account, NewRefreshTokenExpirationDate(), _config["Jwt:RefreshSecret"]);
+            var accessToken = CreateToken(account, DateTime.UtcNow.AddMinutes(_jwtOptions.AccessLifetimeInMinutes), _jwtOptions.AccessSecret);
+            var refreshToken = CreateToken(account, DateTime.UtcNow.AddMinutes(_jwtOptions.RefreshLifetimeInMinutes), _jwtOptions.RefreshSecret);
 
             return new JwtPair
             {
@@ -33,12 +36,10 @@ namespace QuakeAPI.Services
             };
         }
 
-        public string CreateToken(Account account, DateTime expires, string? secret)
+        public string CreateToken(Account account, DateTime expires, string secret)
         {
-            var issuer = _config["Jwt:Issuer"];
-            var audience = _config["Jwt:Audience"];
-            if(string.IsNullOrEmpty(secret))
-                throw new ArgumentNullException("Jwt:AccessSecret or Jwt:RefreshSecret");
+            var issuer = _jwtOptions.Issuer;
+            var audience = _jwtOptions.Audience;
             var key = Encoding.ASCII.GetBytes(secret);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -63,42 +64,24 @@ namespace QuakeAPI.Services
             return jwtToken;
         }
 
-        public DateTime NewAccessTokenExpirationDate()
-        {
-            var accessLifetime = _config["Jwt:AccessLifetimeInMinutes"];
-            if(string.IsNullOrEmpty(accessLifetime))
-                throw new ArgumentNullException("Jwt:AccessLifetimeInMinutes");
-
-            return DateTime.UtcNow.AddMinutes(Int32.Parse(accessLifetime));
-        }
-
-        public DateTime NewRefreshTokenExpirationDate()
-        {
-            var refreshLifetime = _config["Jwt:RefreshLifetimeInMinutes"];
-            if(string.IsNullOrEmpty(refreshLifetime))
-                throw new ArgumentNullException("Jwt:RefreshLifetimeInMinutes");
-
-            return DateTime.UtcNow.AddMinutes(Int32.Parse(refreshLifetime));
-        }
-
         public async Task<JwtPair> RefreshToken(string refreshToken)
         {
-            var tokenEntity = await _rep.Token.FindByTokenWithAccount(refreshToken, true).FirstOrDefaultAsync();
-            
-            if(tokenEntity == null)
-                throw new Exception("Invalid refresh token");
+            var tokenEntity = await _rep.Token.FindByTokenWithAccount(refreshToken, true)
+                .FirstOrDefaultAsync() ??  throw new NotFoundException("Invalid refresh token");
 
-            if(tokenEntity.Expires < DateTime.UtcNow)
-                throw new Exception("Refresh token expired");
+            if(tokenEntity.Account.DeletedAt != null)
+                throw new BadRequestException("You cannot refresh token for deleted account");
+
+            if(tokenEntity.ExpiresAt < DateTime.UtcNow)
+                throw new BadRequestException("Refresh token expired");
 
             var pair = CreatePair(tokenEntity.Account);
 
-            var refreshLifetime = _config["Jwt:RefreshLifetimeInMinutes"];
-            if(string.IsNullOrEmpty(refreshLifetime))
-                throw new ArgumentNullException("Jwt:RefreshLifetimeInMinutes");
-
             tokenEntity.RefreshToken = pair.RefreshToken;
-            tokenEntity.Expires = DateTime.UtcNow.AddMinutes(Int32.Parse(refreshLifetime));
+            tokenEntity.ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.RefreshLifetimeInMinutes);
+
+            //update last logged date
+            tokenEntity.Account.LastLoggedAt = DateTime.UtcNow;
 
             await _rep.Save();
 
@@ -107,10 +90,8 @@ namespace QuakeAPI.Services
 
         public async Task Revoke(string refreshToken)
         {
-            var tokenEntity = await _rep.Token.FindByToken(refreshToken, false).FirstOrDefaultAsync();
-
-            if(tokenEntity == null)
-                throw new Exception("Invalid refresh token");
+            var tokenEntity = await _rep.Token.FindByToken(refreshToken, false)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Invalid refresh token");
 
             _rep.Token.Delete(tokenEntity);
 

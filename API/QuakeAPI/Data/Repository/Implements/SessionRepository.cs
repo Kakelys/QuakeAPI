@@ -20,7 +20,8 @@ namespace QuakeAPI.Data.Repository.Implements
         public IQueryable<Session> FindWithAccountsAndLocation()
         {
             return _context.Sessions
-                .Include(p => p.ActiveAccounts)
+                .Where(s => s.DeletedAt == null)
+                .Include(p => p.ActiveAccounts.Where(aa => aa.DisconnectedAt == null))
                 .Include(p => p.Location);
         }
     }

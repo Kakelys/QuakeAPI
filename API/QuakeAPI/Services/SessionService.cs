@@ -6,6 +6,8 @@ using QuakeAPI.Models.Session;
 using QuakeAPI.DTO.Session;
 using QuakeAPI.DTO;
 using QuakeAPI.Exceptions;
+using QuakeAPI.Extensions;
+using Microsoft.Identity.Client;
 
 namespace QuakeAPI.Services
 {
@@ -22,7 +24,6 @@ namespace QuakeAPI.Services
         {
             return await _rep.Session
                 .FindWithAccountsAndLocation()
-                .Where(s => s.Deleted == null)
                 .Select(session => new SessionDto()
                 {
                     Id = session.Id,
@@ -35,8 +36,9 @@ namespace QuakeAPI.Services
 
         public async Task<List<SessionDto>> GetPage(Page page)
         {
-            return await _rep.Session.FindPage(page, false)
-                .Where(s => s.Deleted == null)
+            return await _rep.Session
+                .FindWithAccountsAndLocation()
+                .TakePage(page)
                 .Select(session => new SessionDto()
                 {
                     Id = session.Id,
@@ -51,7 +53,7 @@ namespace QuakeAPI.Services
         {
             var session = await _rep.Session
                 .FindWithAccountsAndLocation()
-                .Where(s => s.Id == id && s.Deleted == null)
+                .Where(s => s.Id == id && s.DeletedAt == null)
                 .Select(session => new SessionDetail()
                 {
                     Id = session.Id,
@@ -68,7 +70,7 @@ namespace QuakeAPI.Services
         public async Task<List<Player>> GetPlayers(int id)
         {
             var session = await _rep.Session.FindByCondition(x => x.Id == id, false)
-                .Include(x => x.ActiveAccounts.Where(x => x.Disconnected == null))
+                .Include(x => x.ActiveAccounts.Where(x => x.DisconnectedAt == null))
                 .ThenInclude(x => x.Account)
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Session does not exist.");
 
@@ -88,7 +90,7 @@ namespace QuakeAPI.Services
 
             var creatorAccount = await _rep.Account
                 .FindByCondition(x => x.Id == accountId, false)
-                .Include(a => a.ActiveAccounts.Where(a => a.Disconnected == null))
+                .Include(a => a.ActiveAccounts.Where(a => a.DisconnectedAt == null))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Account does not exist.");
 
             if(creatorAccount.ActiveAccounts.Count > 0)
@@ -99,14 +101,14 @@ namespace QuakeAPI.Services
                 Name = session.Name,
                 LocationId = session.LocationId,
                 MaxPlayers = session.MaxPlayers,
-                Created = DateTime.Now
+                CreatedAt = DateTime.Now
             };
 
             var ActiveAccount = new ActiveAccount()
             {
                 AccountId = creatorAccount.Id,
                 SessionId = sessionEntity.Id,
-                Connected = DateTime.Now
+                ConnectedAt = DateTime.Now
             };
 
             sessionEntity.ActiveAccounts.Add(ActiveAccount);
@@ -126,10 +128,10 @@ namespace QuakeAPI.Services
 
             var session = _rep.Session
                 .FindByCondition(s => s.Id == sessionId, false)
-                .Include(s => s.ActiveAccounts.Where(s => s.Disconnected == null))
+                .Include(s => s.ActiveAccounts.Where(s => s.DisconnectedAt == null))
                 .FirstOrDefault() ?? throw new NotFoundException("Session does not exist.");
             
-            if(session.Deleted != null)
+            if(session.DeletedAt != null)
                 throw new BadRequestException("Session is deleted.");
 
             if(session.ActiveAccounts.Count >= session.MaxPlayers)
@@ -142,7 +144,7 @@ namespace QuakeAPI.Services
             {
                 AccountId = user.Id,
                 SessionId = session.Id,
-                Connected = DateTime.Now
+                ConnectedAt = DateTime.Now
             };
             
             _rep.ActiveAccount.Create(activeAccount);
@@ -153,18 +155,18 @@ namespace QuakeAPI.Services
         public async Task DisconnectAccount(int sessionId, int accountId)
         {
             var session = await _rep.Session.FindByCondition(x => x.Id == sessionId, true)
-                .Include(s => s.ActiveAccounts)
+                .Include(s => s.ActiveAccounts.Where(s => s.DisconnectedAt == null))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Session does not exist.");
 
-            var activeAccount = session.ActiveAccounts.FirstOrDefault(x => x.AccountId == accountId);
+            var activeAccount = session.ActiveAccounts.FirstOrDefault(aa => aa.AccountId == accountId);
             if(activeAccount == null)
                 throw new BadRequestException("Account is not in this session.");
 
-            activeAccount.Disconnected = DateTime.Now;
+            activeAccount.DisconnectedAt = DateTime.Now;
 
             if(session.ActiveAccounts.Count == 1)
             {
-                session.Deleted = DateTime.Now;
+                session.DeletedAt = DateTime.Now;
             }
 
             await _rep.Save();

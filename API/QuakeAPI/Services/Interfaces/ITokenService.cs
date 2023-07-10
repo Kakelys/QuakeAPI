@@ -9,8 +9,5 @@ namespace QuakeAPI.Services.Interfaces
         string CreateToken(Account account, DateTime expires, string secret);
         Task<JwtPair> RefreshToken(string refreshToken);
         Task Revoke(string refreshToken);
-
-        DateTime NewAccessTokenExpirationDate();
-        DateTime NewRefreshTokenExpirationDate();
     }
 }

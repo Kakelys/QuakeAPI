@@ -3,6 +3,7 @@ using QuakeAPI.Data.Models;
 using QuakeAPI.Data.Repository.Interfaces;
 using QuakeAPI.DTO;
 using QuakeAPI.Exceptions;
+using QuakeAPI.Extensions;
 using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Services
@@ -45,13 +46,7 @@ namespace QuakeAPI.Services
             };
 
             try 
-            {
-                if(!Directory.Exists(LOCATION_PATH))
-                    Directory.CreateDirectory(LOCATION_PATH);
-
-                if(!Directory.Exists(POSTER_PATH))
-                    Directory.CreateDirectory(POSTER_PATH);
-                    
+            {       
                 using (var stream = System.IO.File.Create(LOCATION_PATH + locationEntity.LocationPath))
                 {
                     await location.Location.CopyToAsync(stream);
@@ -112,7 +107,7 @@ namespace QuakeAPI.Services
 
         public async Task<List<Location>> GetPage(Page page)
         {
-            return await _rep.Location.FindPage(page, false).ToListAsync();
+            return await _rep.Location.FindAll(false).TakePage(page).ToListAsync();
         }
     }
 }

@@ -24,7 +24,11 @@ namespace QuakeAPI.Middlewares
             } 
             catch(Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                _logger.LogError(
+                    $"  Exception: "+
+                    $"\n\tMethod:{context.Request.Method} "+
+                    $"\n\tMessage:{ex.Message}");
+                
                 throw ex;
             }
         }
