@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuakeAPI.Data.Models;
 using QuakeAPI.DTO;
+using QuakeAPI.DTO.Account;
 using QuakeAPI.Extensions;
 using QuakeAPI.Services.Interfaces;
 
@@ -22,6 +23,12 @@ namespace QuakeAPI.Controllers
         public async Task<IActionResult> GetAccounts([FromQuery] Page page)
         {
             return Ok(await _accountService.GetPage(page));   
+        }
+
+        [HttpGet("search"), Authorize(Roles = Role.Admin)]
+        public async Task<IActionResult> GetAccountsWithSearch([FromQuery] Page page, [FromQuery] AccountSearch accountSearch)
+        {
+            return Ok(await _accountService.GetPageWithSerach(page, accountSearch));
         }
 
         [HttpPost("register")]
