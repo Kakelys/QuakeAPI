@@ -46,7 +46,6 @@ builder.Services.AddScoped<IAccountTimedService, AccountTimedService>();
 
 //swagger
 builder.Services.AddControllers();
-builder.Services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "QuakeAPI", Version = "v1" });
