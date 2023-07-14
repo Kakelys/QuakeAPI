@@ -28,14 +28,12 @@ namespace QuakeAPI.Services
 
         public async Task<Location> Create(LocationNew location)
         {
-            if(await _rep.Location.FindByCondition(x => EF.Functions.Like(x.Name, location.Name), false).FirstOrDefaultAsync() != null)
+            if(await _rep.Location.FindByCondition(x => EF.Functions.Like(x.Name, location.Name), false)
+                .FirstOrDefaultAsync() != null)
                 throw new BadRequestException("Location with same name already exist.");
 
             var locationExtension = Path.GetExtension(location.Location.FileName);
             var posterExtenstion = Path.GetExtension(location.Poster.FileName);
-
-            if(locationExtension != ".loc")
-                throw new BadRequestException("Invalid file type for location.");
 
             var locationEntity = new Location() 
             {

@@ -1,8 +1,13 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using QuakeAPI.Data.Models;
 using QuakeAPI.Data.Repository.Interfaces;
 using QuakeAPI.DTO;
+using QuakeAPI.DTO.Account;
 using QuakeAPI.Exceptions;
 using QuakeAPI.Extensions;
 using QuakeAPI.Options;
@@ -17,19 +22,22 @@ namespace QuakeAPI.Services
         private readonly JwtOptions _jwtOptions;
         private readonly IEmailService _emailService;
         private readonly ILogger<AccountService> _logger;
+        private readonly IMapper _mapper;
 
         public AccountService(
             IRepositoryManager rep, 
             ITokenService tokenService, 
             IOptions<JwtOptions> jwtOptions,
             IEmailService emailService,
-            ILogger<AccountService> logger)
+            ILogger<AccountService> logger,
+            IMapper mapper)
         {
             _rep = rep;
             _tokenService = tokenService;
             _jwtOptions = jwtOptions.Value;
             _emailService = emailService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<JwtPair> Login(Auth auth)
@@ -139,29 +147,31 @@ namespace QuakeAPI.Services
 
         public async Task<List<AccountDto>> GetAll()
         {
-            return await _rep.Account
-            .FindNotDeleted(false)
-            .Select(a => new AccountDto
-            {
-                Id = a.Id,
-                Email = a.Email,
-                Username = a.Username,
-                Role = a.Role
-            }).ToListAsync();
+            var accounts = await _rep.Account
+                .FindAll(false)
+                .ProjectTo<AccountDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            return _mapper.Map<List<AccountDto>>(accounts);
         }
 
         public async Task<List<AccountDto>> GetPage(Page page)
         {
             return await _rep.Account
-            .FindNotDeleted(false)
-            .TakePage(page)
-            .Select(a => new AccountDto
-            {
-                Id = a.Id,
-                Email = a.Email,
-                Username = a.Username,
-                Role = a.Role
-            }).ToListAsync();
+                .FindAll(false)
+                .TakePage(page)
+                .ProjectTo<AccountDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+        }
+
+        public async Task<List<AccountDto>> GetPageWithSerach(Page page, AccountSearch accountSearch)
+        {
+            return await _rep.Account
+                .FindAll(false)
+                .Where(a => EF.Functions.Like(a.Username, $"%{accountSearch.Username}%"))
+                .TakePage(page)
+                .ProjectTo<AccountDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
         }
 
         public async Task Update(int id, AccountUpdate accountUpdate)

@@ -8,7 +8,7 @@ namespace QuakeAPI.Services
     {
         private readonly ILogger<EmailService> _logger;
         private const string fromAddress = "seno.v.test@gmail.com";
-        private const string fromPassword = "ltyofnboupzwtdjr";
+        private const string fromPassword = "saozemqwwysggaog";
 
         public EmailService(ILogger<EmailService> logger)
         {

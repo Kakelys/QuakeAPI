@@ -6,20 +6,30 @@ using QuakeAPI.Services.Interfaces;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.OpenApi.Models;
 using QuakeAPI.Options;
-using FluentValidation;
-using QuakeAPI.DTO;
-using FluentValidation.AspNetCore;
+using QuakeAPI.Extensions.Mapper;
+using QuakeAPI.Mongo;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //logging
 builder.Logging.AddConsole();
-
+builder.Logging.AddMongoLogger();
+ 
 //options
 builder.Services.AddAppOptions(builder.Configuration);
 
+//auto mapper
+builder.Services.ConfigureAutoMapper();
+
+//telegram bot
+builder.Services.ConfigureTelegramBot(builder.Configuration);
+
 //repository
 builder.Services.AddRepositoryService(builder.Configuration);
+
+//mongodb
+builder.Services.AddSingleton(builder.Configuration);
 
 //services
 builder.Services.AddScoped<ILocationService, LocationService>();
@@ -28,6 +38,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 //account timed service
 builder.Services.AddHostedService<AccountTimedHostedService>();
@@ -35,6 +46,7 @@ builder.Services.AddScoped<IAccountTimedService, AccountTimedService>();
 
 //swagger
 builder.Services.AddControllers();
+builder.Services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "QuakeAPI", Version = "v1" });
@@ -69,11 +81,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 //validators
-builder.Services.AddFluentValidationAutoValidation(fv => 
-{
-  fv.DisableDataAnnotationsValidation = true;
-});
-builder.Services.AddScoped<IValidator<AccountUpdate>, AccountUpdateValidator>();
+builder.Services.AddValidatorService();
 
 //auth
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -94,6 +102,7 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<ExceptionLoggerMiddleware>();
 
+//static files
 var staticFilesProvider = new FileExtensionContentTypeProvider();
 staticFilesProvider.Mappings[".loc"] = "application/octet-stream";
 app.UseStaticFiles(new StaticFileOptions

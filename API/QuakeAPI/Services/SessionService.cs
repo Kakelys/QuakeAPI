@@ -93,6 +93,13 @@ namespace QuakeAPI.Services
                 .Include(a => a.ActiveAccounts.Where(a => a.DisconnectedAt == null))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("Account does not exist.");
 
+            var location = await _rep.Location
+                .FindByCondition(x => x.Id == session.LocationId, false)
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Location does not exist.");
+
+            if(location.MaxPlayers < session.MaxPlayers)
+                throw new BadRequestException($"Session max players is higher than location max players. Limit: {location.MaxPlayers}");
+
             if(creatorAccount.ActiveAccounts.Count > 0)
                 throw new BadRequestException("Account is already in a session.");
 
