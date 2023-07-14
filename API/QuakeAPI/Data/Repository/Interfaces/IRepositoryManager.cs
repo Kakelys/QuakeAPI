@@ -8,6 +8,7 @@ namespace QuakeAPI.Data.Repository.Interfaces
         IActiveAccountRepository ActiveAccount { get; }
         ITokenRepository Token { get; }
         IAnalyticRepository Analytic { get; }
+        INotificationRepository Notification { get; }
 
         Task BeginTransaction();
         Task Commit();

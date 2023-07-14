@@ -10,6 +10,7 @@ namespace QuakeAPI.Data
         public virtual DbSet<Account> Accounts { get;set; } = null!;
         public virtual DbSet<ActiveAccount> ActiveAccounts { get;set; } = null!;
         public virtual DbSet<Token> Tokens { get;set; } = null!;
+        public virtual DbSet<Notification> Notifications { get;set; } = null!;
 
         public QuakeDbContext(DbContextOptions<QuakeDbContext> options) : base(options)
         {}
@@ -140,6 +141,25 @@ namespace QuakeAPI.Data
                     .HasForeignKey(t => t.AccountId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_Token_AccountId");
+            });
+
+            builder.Entity<Notification>(n => 
+            {
+                n.HasKey(n => n.Id);
+
+                n.Property(n => n.Id)
+                    .ValueGeneratedOnAdd();
+                n.Property(n => n.Name)
+                    .IsRequired()
+                    .HasColumnType("varchar(255)");
+                n.Property(n => n.Data)
+                    .HasColumnType("nvarchar(3000)");
+                n.Property(n => n.CreatedAt)
+                    .IsRequired();
+
+                n.HasOne(n => n.Account)
+                    .WithMany(a => a.Notifications)
+                    .HasForeignKey(n => n.AccountId);
             });
 
            base.OnModelCreating(builder);

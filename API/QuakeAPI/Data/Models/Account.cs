@@ -18,5 +18,7 @@ namespace QuakeAPI.Data.Models
         public List<ActiveAccount> ActiveAccounts {get;set;} = new();
         [JsonIgnore]
         public List<Token> Tokens {get;set;} = new();
+        [JsonIgnore]
+        public List<Notification> Notifications {get;set;} = new();
     }
 }
