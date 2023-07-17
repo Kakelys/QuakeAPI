@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuakeAPI.Data;
 
@@ -11,9 +12,11 @@ using QuakeAPI.Data;
 namespace QuakeAPI.Migrations
 {
     [DbContext(typeof(QuakeDbContext))]
-    partial class QuakeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230714194800_notifications")]
+    partial class notifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,7 +53,7 @@ namespace QuakeAPI.Migrations
                         .HasColumnType("varchar(50)")
                         .HasDefaultValue("User");
 
-                    b.Property<int>("TelegramChatId")
+                    b.Property<int>("TelegramId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);

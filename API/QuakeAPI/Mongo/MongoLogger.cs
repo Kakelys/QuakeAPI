@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using QuakeAPI.Mongo.Models;
+using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Mongo
 {
@@ -16,7 +17,7 @@ namespace QuakeAPI.Mongo
             _loggerConfig = loggerConfig;
 
             var optionsValue = options.Value;
-
+        
             var mongoClient = new MongoClient(optionsValue.ConnectionString);
             _logsCollection = mongoClient.GetDatabase(optionsValue.DatabaseName).GetCollection<Log>(optionsValue.LogsCollectionName);
         }
@@ -42,10 +43,6 @@ namespace QuakeAPI.Mongo
                 return;
             var log = new Log(logLevel, $"{state}", exception);
             await _logsCollection.InsertOneAsync(log);
-            // ConsoleColor originalColor = Console.ForegroundColor;
-            // Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            // Console.WriteLine(log);
-            // Console.ForegroundColor = originalColor;
         }
     }
 }

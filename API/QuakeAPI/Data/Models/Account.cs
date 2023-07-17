@@ -13,6 +13,7 @@ namespace QuakeAPI.Data.Models
         public string Role {get;set;} = null!;
         public DateTime LastLoggedAt {get;set;}
         public DateTime? DeletedAt {get;set;}
+        public int TelegramChatId {get;set;}
 
         [JsonIgnore]
         public List<ActiveAccount> ActiveAccounts {get;set;} = new();

@@ -42,6 +42,9 @@ namespace QuakeAPI.Data
                     .IsRequired();
                 account.Property(a => a.DeletedAt)
                     .HasDefaultValue(null);
+                account.Property(a => a.TelegramChatId)
+                    .IsRequired()
+                    .HasDefaultValue(0);
 
                 account.HasMany(a => a.ActiveAccounts)
                     .WithOne(aa => aa.Account)

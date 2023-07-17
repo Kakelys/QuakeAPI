@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
+using QuakeAPI.Services.Interfaces;
 
 namespace QuakeAPI.Mongo
 {

@@ -8,7 +8,6 @@ using Microsoft.OpenApi.Models;
 using QuakeAPI.Options;
 using QuakeAPI.Extensions.Mapper;
 using QuakeAPI.Mongo;
-using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +37,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ITelegramService, TelegramService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 //account timed service

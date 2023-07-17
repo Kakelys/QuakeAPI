@@ -1,4 +1,4 @@
-namespace QuakeAPI.Data.Models
+namespace QuakeAPI.DTO.Notifications
 {
     public enum NotificationType
     {

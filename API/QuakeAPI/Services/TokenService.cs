@@ -26,9 +26,15 @@ namespace QuakeAPI.Services
 
         public JwtPair CreatePair(Account account)
         {
-            var accessToken = CreateToken(account, DateTime.UtcNow.AddMinutes(_jwtOptions.AccessLifetimeInMinutes), _jwtOptions.AccessSecret);
-            var refreshToken = CreateToken(account, DateTime.UtcNow.AddMinutes(_jwtOptions.RefreshLifetimeInMinutes), _jwtOptions.RefreshSecret);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+                new Claim(ClaimTypes.Role, account.Role),
+            };
 
+            var accessToken = CreateToken(claims, DateTime.UtcNow.AddMinutes(_jwtOptions.AccessLifetimeInMinutes), _jwtOptions.AccessSecret);
+            var refreshToken = CreateToken(claims, DateTime.UtcNow.AddMinutes(_jwtOptions.RefreshLifetimeInMinutes), _jwtOptions.RefreshSecret);
+            
             return new JwtPair
             {
                 AccessToken = accessToken,
@@ -36,7 +42,7 @@ namespace QuakeAPI.Services
             };
         }
 
-        public string CreateToken(Account account, DateTime expires, string secret)
+        public string CreateToken(List<Claim> claims, DateTime expires, string secret)
         {
             var issuer = _jwtOptions.Issuer;
             var audience = _jwtOptions.Audience;
@@ -44,11 +50,7 @@ namespace QuakeAPI.Services
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
-                    new Claim(ClaimTypes.Role, account.Role),
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = expires,
                 Issuer = issuer,
                 Audience = audience,
@@ -62,6 +64,11 @@ namespace QuakeAPI.Services
             var jwtToken = tokenHandler.WriteToken(token);
 
             return jwtToken;
+        }
+
+        public string GetClaim(string token, string claimType)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<JwtPair> RefreshToken(string refreshToken)
@@ -96,6 +103,73 @@ namespace QuakeAPI.Services
             _rep.Token.Delete(tokenEntity);
 
             await _rep.Save();
+        }
+
+        public bool Validate(string token, string secret)
+        {
+            var validator = new JwtSecurityTokenHandler();
+
+            var validationParams = new TokenValidationParameters
+            {  
+                ValidIssuer = _jwtOptions.Issuer,
+                ValidAudience = _jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true
+            };
+
+            if(validator.CanReadToken(token))
+            {
+                try
+                {
+                    validator.ValidateToken(token, validationParams, out var validatedToken);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Validate token and return claims
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="secret"></param>
+        /// <returns>returns null if not valid</returns>
+        public ClaimsPrincipal? ValidateWithClaims(string token, string secret)
+        {
+            var validator = new JwtSecurityTokenHandler();
+
+            var validationParams = new TokenValidationParameters
+            {  
+                ValidIssuer = _jwtOptions.Issuer,
+                ValidAudience = _jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secret)),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true
+            };
+
+            if(validator.CanReadToken(token))
+            {
+                try
+                {
+                    return validator.ValidateToken(token, validationParams, out var validatedToken);
+                }
+                catch
+                {}
+            }
+
+            return null;
         }
     }
 }
