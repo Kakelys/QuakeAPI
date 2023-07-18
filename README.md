@@ -20,7 +20,17 @@ if dotnet ef not istalled:
 ```
 if you have specific database name or several servers change it in appsettings
 
-5. start: 
+5. start mongodb 
+6. use ngrok(or something else) to create tunnel to your server
+```
+    ngrok http port
+```
+copy link to appsettings.json: 
+```
+WebhookUrl: "your_link"
+```
+
+7. start: 
   ```
   dotnet run
   ```
