@@ -7,6 +7,8 @@ namespace QuakeAPI.DTO.Telegram
     {
         [JsonPropertyName("update_id")]
         public int Id { get;set; }
-        public Message Message { get;set; } = null!;
+        public Message? Message { get;set; }
+        [JsonPropertyName("edited_message")]
+        public Message? EditedMessage { get;set; }
     }
 }

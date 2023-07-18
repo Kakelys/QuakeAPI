@@ -9,20 +9,28 @@ namespace QuakeAPI.Controllers
     public class BotController : ControllerBase
     {
         private readonly ITelegramService _telegramService;
+        private readonly ILogger<BotController> _logger;
 
-        public BotController(ITelegramService telegramService)
+        public BotController(
+            ITelegramService telegramService,
+            ILogger<BotController> logger)
         {
             _telegramService = telegramService;
+            _logger = logger;
         }
 
         [HttpPost("update")]
         public async Task<IActionResult> Update([FromBody] Update update)
-        {
-            Console.WriteLine($"Message {update.Message.Text}, id: {update.Message.Id}");
-            Console.WriteLine(update.Message.Date);
-            Console.WriteLine(update.Id);
-            
-            await _telegramService.ProcessMessage(update);
+        {    
+            // try/catch nedded to prevent telegram from sending same message twice
+            try
+            {
+                await _telegramService.ProcessMessage(update);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to process telegram message");
+            }
 
             return Ok();
         }

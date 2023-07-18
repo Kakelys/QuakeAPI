@@ -7,7 +7,7 @@ namespace QuakeAPI.DTO.Notifications
 {
     public class EmailNotification
     {
-        public string subject {get;set;} = null!;
-        public string message {get;set;} = null!;
+        public string Subject {get;set;} = null!;
+        public string Message {get;set;} = null!;
     }
 }

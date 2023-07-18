@@ -34,21 +34,39 @@ namespace QuakeAPI.Services
 
         public async Task ProcessMessage(Update update)
         {
-            var command = update.Message.Text.Trim().Split(' ').First();
-            switch (command)
+            var message = update.Message ?? update.EditedMessage;
+            if(message == null)
+                return;
+                
+            var command = message.Text.Trim().Split(' ').First();
+            try
             {
-                case "/start":
-                    await _bot.SendTextMessageAsync(update.Message.Chat.Id, "Hello, I'm QuakeBot;\nTo start getting notifications, please link your account with: \n```/link example@gmail.com```\nOR```/link account_id```", parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
-                    break;
-                case "/link":
-                    await OnLinkAccount(update.Message);
-                    break;
-                case "/stop":
-                    await OnStopNotifications(update.Message.Chat.Id);
-                    break;
-                default:
-                    await _bot.SendTextMessageAsync(update.Message.Chat.Id, "Unknown command");
-                    break;
+                switch (command)
+                {
+                    case "/start":
+                        await _bot.SendTextMessageAsync(message.Chat.Id, "Hello, I'm QuakeBot;\nTo start getting notifications, please link your account with: \n``` /link example@gmail.com```\nOR ``` /link account_id```", parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+                        break;
+                    case "/link":
+                        await OnLinkAccount(message);
+                        break;
+                    case "/stop":
+                        await OnStopNotifications(message.Chat.Id);
+                        break;
+                    default:
+                        throw new BadRequestException("Unknown command");
+                }
+            }
+            catch(Exception ex)
+            {
+                if(ex is NotFoundException || ex is BadRequestException)
+                {
+                    await SendMessage(message.Chat.Id, ex.Message);
+                }
+                else
+                {
+                    await SendMessage(message.Chat.Id, "Something went wrong :(\nPlease, try again later");
+                    throw;
+                }
             }
         }
         
@@ -67,7 +85,8 @@ namespace QuakeAPI.Services
             
             var account = await _rep.Account
                 .FindNotDeleted(true)
-                .FirstOrDefaultAsync(a => a.Id == accountId) ?? throw new BadRequestException("Account not found");
+                .FirstOrDefaultAsync(a => a.Id == accountId) 
+                ?? throw new NotFoundException("Account not found");
 
             account.TelegramChatId = chatId;
 
@@ -89,13 +108,7 @@ namespace QuakeAPI.Services
             var account = await _rep.Account
                 .FindNotDeleted(false)
                 .Where(a => a.Id == accountId || a.Email == userIdentifier)
-                .FirstOrDefaultAsync();
-
-            if(account == null)
-            {
-                await _bot.SendTextMessageAsync(message.Chat.Id, "Account not found");
-                return;
-            }
+                .FirstOrDefaultAsync() ?? throw new NotFoundException("Account not found");
 
             //create token
             var linkToken = _tokenService.CreateToken(new List<Claim>
